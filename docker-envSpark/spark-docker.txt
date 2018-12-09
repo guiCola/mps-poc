@@ -1,0 +1,20 @@
+####################################################################################
+#Run docker
+docker run --rm -p 8888:8888 --user root -e NB_GID=100 -e GEN_CERT=yes -e GRANT_SUDO=yes --name=spark jupyter/pyspark-notebook
+####################################################################################
+#Copy jar to container
+echo "User: create path jar"
+docker exec  spark mkdir /tmp
+echo "User: copy sqljdbc42.jar"
+docker cp "E:\5-Docker\6_spark\sqljdbc42.jar" "spark:/home/jovyan/work/sqljdbc42.jar"
+####################################################################################
+#notebook jupyter Cell 1
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.config('spark.driver.extraClassPath', '/home/jovyan/work/sqljdbc42.jar').getOrCreate()
+####################################################################################
+#notebook jupyter Cell 2
+mssql_df = spark.read.format('jdbc') \
+.options(url='jdbc:sqlserver://172.16.50.210:1433;databaseName=VIGI2_DSA;user=SparkUser;password=SparkUser', query='SELECT TOP 100 * FROM v_UnifiedPrescription') \
+.load()
+#mssql_df.printSchema()
+mssql_df.show()
